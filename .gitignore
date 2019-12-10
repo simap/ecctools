@@ -1,2 +1,5 @@
 .DS_Store
 signer
+make_keys
+*.key
+*.pub

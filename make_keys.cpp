@@ -16,11 +16,13 @@ void printHex(uint8_t * data, int len) {
 
 int main(int argc, char ** argv) {
   if (argc < 2) {
-    printf("Need a key file name\n");
+    fprintf(stderr, "Need a key file name\n");
     return -1;
   }
 
-  printf("hello, g_rng_function: %x\n", uECC_get_rng());
+  if (uECC_get_rng() == NULL) {
+    fprintf(stderr, "Compiled without a random number generator!\n");
+  }
 
 
   const struct uECC_Curve_t * curve = uECC_secp256k1();
