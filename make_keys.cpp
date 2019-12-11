@@ -22,6 +22,7 @@ int main(int argc, char ** argv) {
 
   if (uECC_get_rng() == NULL) {
     fprintf(stderr, "Compiled without a random number generator!\n");
+    return -1;
   }
 
 

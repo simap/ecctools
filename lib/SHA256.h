@@ -43,7 +43,7 @@ public:
     void clear();
 
 private:
-    struct {
+    struct SHA256_state {
         uint32_t h[8];
         uint32_t w[16];
         uint64_t length;
