@@ -1,5 +1,6 @@
 .DS_Store
-signer
 make_keys
+archiver
+verifier
 *.key
 *.pub
