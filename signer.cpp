@@ -6,23 +6,16 @@
 #include <sys/types.h>
 #include <libgen.h>
 #include <stdlib.h>
+#include "stfu.h"
+
 
 off_t fsize(const char *filename) {
     struct stat st; 
-
     if (stat(filename, &st) == 0)
         return st.st_size;
-
     return -1; 
 }
 
-typedef struct {
-    uint32_t type;
-    uint32_t size;
-    uint8_t hash[32]; //sha256
-    uint8_t signature[64]; //secp256k1
-    char name[96];
-} FUFile; //200 bytes
 
 int main(int argc, char ** argv) {
   const struct uECC_Curve_t * curve = uECC_secp256k1();
@@ -44,18 +37,16 @@ int main(int argc, char ** argv) {
     }
   }
 
-
-  uint8_t private1[32];
-  // uint8_t public1[64];
-  char tmp[100];
+  uint8_t privateKey[32];
+  char tmp[200];
   FILE * fp, *fpout;
-
+  int nread;
 
   sprintf(tmp, "%s.key", argv[1]);
   fp = fopen(tmp, "rb");
-  int nread = fread(private1, 1, sizeof(private1), fp);
+  nread = fread(privateKey, 1, sizeof(privateKey), fp);
   fclose(fp);
-  if (nread != sizeof(private1)) {
+  if (nread != sizeof(privateKey)) {
     fprintf(stderr, "can't read key %s\n", tmp);
     return -1;
   }
@@ -94,9 +85,8 @@ int main(int argc, char ** argv) {
       fprintf(stderr, "had trouble reading file for hash %s\n", fileName);
       return -1;
     }
-
     sha.finalize(fufile.hash, 32);
-    uECC_sign(private1, fufile.hash, 32, fufile.signature, curve);
+    uECC_sign(privateKey, fufile.hash, 32, fufile.signature, curve);
 
     //write out header
     fwrite(&fufile, sizeof(fufile), 1, fpout);
@@ -116,5 +106,6 @@ int main(int argc, char ** argv) {
 
     fclose(fp);
   }
-
+  fclose(fpout);
+  printf("signed transfer file update archive complete!\n");
 }

@@ -16,7 +16,7 @@ void printHex(uint8_t * data, int len) {
 
 int main(int argc, char ** argv) {
   if (argc < 2) {
-    fprintf(stderr, "Need a key file name\n");
+    fprintf(stderr, "Need a key name\n");
     return -1;
   }
 
@@ -24,7 +24,6 @@ int main(int argc, char ** argv) {
     fprintf(stderr, "Compiled without a random number generator!\n");
     return -1;
   }
-
 
   const struct uECC_Curve_t * curve = uECC_secp256k1();
   uint8_t private1[32];
@@ -47,9 +46,9 @@ int main(int argc, char ** argv) {
   fclose(fp);
 
 
-  printf("const uint8_t private_key[] = ");
+  printf("const unsigned char private_key[] = ");
   printHex(private1, 32);
 
-  printf("const uint8_t public_key[] = ");
+  printf("const unsigned char public_key[] = ");
   printHex(public1, 64);
 }
