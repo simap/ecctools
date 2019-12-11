@@ -60,22 +60,27 @@ int main(int argc, char ** argv) {
     int bytesRemaining = fsize(fileName);
     fp = fopen(fileName, "rb");
 
-    FUFile fufile = {0};
-    fufile.type = 1;
-    fufile.size = bytesRemaining;
+    //do header
+    FUFileHeader header = {0};
+    FUFileFooter footer = {0};
+    header.type = 1;
+    header.size = bytesRemaining;
     {
       char * fileBaseName = strdup(fileName);
-      strncpy(fufile.name, basename(fileBaseName), sizeof(fufile.name)-1);
+      strncpy(header.name, basename(fileBaseName), sizeof(header.name)-1);
       free(fileBaseName);
     }
+    fwrite(&header, sizeof(header), 1, fpout);
 
-    //hash it first
+    //hash header + file, and copy to archive
     uint8_t buf[512];
     SHA256 sha;
+    sha.update(&header, sizeof(header));
     while (bytesRemaining > 0) {
       int nread = fread(buf, 1, 512, fp);
       if (nread > 0) {
         bytesRemaining -= nread;
+        fwrite(buf, 1, nread, fpout);
         sha.update(buf, nread);
       } else {
         break;
@@ -85,26 +90,13 @@ int main(int argc, char ** argv) {
       fprintf(stderr, "had trouble reading file for hash %s\n", fileName);
       return -1;
     }
-    sha.finalize(fufile.hash, 32);
-    uECC_sign(privateKey, fufile.hash, 32, fufile.signature, curve);
-
-    //write out header
-    fwrite(&fufile, sizeof(fufile), 1, fpout);
-
-    //rewind and copy to output
-    fseek(fp, 0, SEEK_SET);
-    bytesRemaining = fufile.size;
-    while (bytesRemaining > 0) {
-      int nread = fread(buf, 1, 512, fp);
-      if (nread > 0) {
-        bytesRemaining -= nread;
-        fwrite(buf, 1, nread, fpout);
-      } else {
-        break;
-      }
-    }
-
     fclose(fp);
+
+    //hash, sign, and write out footer
+    sha.finalize(footer.hash, 32);
+    uECC_sign(privateKey, footer.hash, 32, footer.signature, curve);
+    fwrite(&footer, sizeof(footer), 1, fpout);
+
   }
   fclose(fpout);
   printf("signed transfer file update archive complete!\n");

@@ -40,20 +40,21 @@ int main(int argc, char ** argv) {
   }
 
   for (int fileNum = 0; fileNum < header.numFiles; fileNum++) {
-    FUFile fufile = {0};
-    nread = fread(&fufile, 1, sizeof(FUFile), fpin);
-    if (nread != sizeof(FUFile)) {
-      fprintf(stderr, "unable to read file %d\n", fileNum);
+    FUFileHeader header = {0};
+    nread = fread(&header, 1, sizeof(header), fpin);
+    if (nread != sizeof(header)) {
+      fprintf(stderr, "unable to read header\n");
       return -1;
     }
 
-    printf("Scanning type:%d size:%d name:%s\n", fufile.type, fufile.size, fufile.name);
+    printf("Scanning type:%d size:%d name:%s\n", header.type, header.size, header.name);
 
-    int bytesRemaining = fufile.size;
+    int bytesRemaining = header.size;
 
     //hash it
     uint8_t buf[512];
     SHA256 sha;
+    sha.update(&header, sizeof(header));
     while (bytesRemaining > 0) {
       int nread = fread(buf, 1, bytesRemaining < 512 ? bytesRemaining : 512, fpin);
       if (nread > 0) {
@@ -67,14 +68,22 @@ int main(int argc, char ** argv) {
       fprintf(stderr, "had trouble reading file for hash, %d bytes more wanted\n", bytesRemaining);
       return -1;
     }
+
+    FUFileFooter footer = {0};
+    nread = fread(&footer, 1, sizeof(footer), fpin);
+    if (nread != sizeof(footer)) {
+      fprintf(stderr, "unable to read footer\n");
+      return -1;
+    }
+
     uint8_t hash[32];
     sha.finalize(hash, 32);
-    if (memcmp(hash, fufile.hash, 32) != 0) {
+    if (memcmp(hash, footer.hash, 32) != 0) {
       fprintf(stderr, "hash mismatch!\n");
       return -1; 
     }
 
-    int signatureOK = uECC_verify(public1, hash, 32, fufile.signature, curve);
+    int signatureOK = uECC_verify(public1, hash, 32, footer.signature, curve);
     if (!signatureOK) {
       fprintf(stderr, "signature invalid!\n");
       return -1;

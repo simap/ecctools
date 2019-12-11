@@ -49,7 +49,7 @@ File format
 
 Starts with the magic "STFU", then the number of files/entries (32 bits). This is more for convienience, and is not secured/signed.
 
-```
+```c
 typedef struct {
     char magic[4];  //"STFU" signed transfer firmware update
     uint32_t numFiles;
@@ -58,23 +58,31 @@ typedef struct {
 
 Each entry has this header record:
 
-```
+```c
 typedef struct {
     uint32_t type;
     uint32_t size;
-    uint8_t hash[32]; //sha256
-    uint8_t signature[64]; //secp256k1
-    char name[96];
-} FUFile; //200 bytes
+    char name[92];
+} FUFileHeader; //100 bytes
 ```
 
-Followed by the data for the file. 
+Followed by the data for the file/payload, then a footer:
+
+```c
+typedef struct {
+	uint8_t hash[32]; //sha256 of the header + payload
+	uint8_t signature[64]; //secp256k1 signature of the hash
+} FUFileFooter; //96 bytes
+
+```
 
 Implmentation Notes
 ============
 
-It's assumed that a micro can't hold everything in memory to verify it first, and the update will likely be streamed and so will likely be writing/flashing as it goes, saving verification for the end. Ideally the stored flash will be in some invalid state until verification completes. You'll want to keep a valid image or use a bootloader in case the transfer goes sideways or is corrupt/invalid.
+It's assumed that a micro can't hold everything in memory to verify it first, and the update will likely be streamed and so will likely be writing/flashing as it goes, saving verification for the end. Ideally the data stored will be in some invalid state until verification of the hash + signature checks out. You'll want to keep a valid image or use a bootloader in case the transfer goes sideways or is corrupt/invalid.
 
 Writing non-firmware files e.g. to an embedded filesystem can also be done, perhaps writing to a temporary file and replacing the original if valid.
 
 Since each entry is self-contained and the whole archive header is unprotected, it's possible that a streamed update fails part way and some previous entries have already been written. Plan for that (maybe holding the final write for the end). You can order the files in the archive to help. It's also possible someone maliciously combines valid entries from preexisting archives. Plan for that (or add something to sign the whole thing).
+
+The name is intended to be meaningful in some way, you may call your firmware "firmware.bin" or something to know its executable code instead of a file, or you can use the type field (by adding support in the archiver). It could have the address to flash to, or that could be embedded in the payload (like a .hex file).

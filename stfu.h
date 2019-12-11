@@ -4,10 +4,13 @@
 typedef struct {
     uint32_t type;
     uint32_t size;
-    uint8_t hash[32]; //sha256
-    uint8_t signature[64]; //secp256k1
-    char name[96];
-} FUFile; //200 bytes
+    char name[92];
+} FUFileHeader; //100 bytes
+
+typedef struct {
+	uint8_t hash[32]; //sha256 of the header + payload
+	uint8_t signature[64]; //secp256k1 signature of the hash
+} FUFileFooter; //96 bytes
 
 typedef struct {
     char magic[4];  //"STFU" signed transfer firmware update
