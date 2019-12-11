@@ -8,8 +8,9 @@ Each entry has a type (currently set to 1 for regular files), a name up to 95 ch
 Uses sha256 and secp256k1 to hash and then sign files.
 
 Bits borrowed from
-* sha256 - https://github.com/rweather/arduino-projects
-* micro-ecc - https://github.com/kmackay/micro-ecc
+
+* sha256 - [https://github.com/rweather/arduinolibs/tree/master/libraries/Crypto](https://github.com/rweather/arduinolibs/tree/master/libraries/Crypto)
+* micro-ecc - [https://github.com/kmackay/micro-ecc](https://github.com/kmackay/micro-ecc)
 
 
 make_keys
