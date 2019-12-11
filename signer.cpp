@@ -7,7 +7,6 @@
 #include <libgen.h>
 #include <stdlib.h>
 
-
 off_t fsize(const char *filename) {
     struct stat st; 
 
@@ -54,7 +53,7 @@ int main(int argc, char ** argv) {
 
   sprintf(tmp, "%s.key", argv[1]);
   fp = fopen(tmp, "rb");
-  int nread = fread(private1, sizeof(private1), 1, fp);
+  int nread = fread(private1, 1, sizeof(private1), fp);
   fclose(fp);
   if (nread != sizeof(private1)) {
     fprintf(stderr, "can't read key %s\n", tmp);
